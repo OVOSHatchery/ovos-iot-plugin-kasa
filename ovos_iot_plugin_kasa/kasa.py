@@ -1,30 +1,7 @@
 from pyHS100 import Discover, SmartPlug, SmartBulb
 from time import sleep
-import logging
-from webcolors import name_to_rgb, rgb_to_name, hex_to_rgb
-from colorsys import rgb_to_hsv, hsv_to_rgb
-
-LOG = logging.getLogger("simpleKasa")
-
-
-def hsv_to_name(h, s, v):
-    rgb = hsv_to_rgb(h, s, v)
-    try:
-        return rgb_to_name(rgb)
-    except ValueError: # color has no official name
-        # TODO find closest named color
-        return "unknown color name"
-
-
-def name_to_hsv(name):
-    r, g, b = name_to_rgb(name)
-    return rgb_to_hsv(r, g, b)
-
-
-def hex_to_hsv(hex_color):
-    r, g, b = hex_to_rgb(hex_color)
-    h, s, v = rgb_to_hsv(r, g, b)
-    return h, s, v
+from ovos_utils.log import LOG
+from ovos_utils.colors import name_to_rgb, rgb_to_name, hex_to_rgb, rgb_to_hsv, hsv_to_rgb, hex_to_hsv, name_to_hsv, hsv_to_name
 
 
 def discover_devices():

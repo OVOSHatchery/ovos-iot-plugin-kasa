@@ -1,5 +1,5 @@
 from ovos_PHAL_plugin_commonIOT.devices import GenericDevice, RGBWBulb, RGBBulb, Bulb
-from ovos_PHAL_plugin_commonIOT.colors import Color
+from ovos_utils.colors import Color
 from ovos_iot_plugin_kasa.kasa import discover_devices, SmartPlug, SmartBulb, tplink_hsv_to_hsv, hsv_to_tplink_hsv
 
 
