@@ -4,9 +4,10 @@ from ovos_iot_plugin_kasa.kasa import discover_devices, SmartPlug, SmartBulb, tp
 
 
 class KasaDevice(GenericDevice):
-    def __init__(self, host, name="generic kasa device", raw_data=None):
+    def __init__(self, device_id, host, name="generic kasa device", raw_data=None):
+        device_id = device_id or f"Kasa:{host}"
         raw_data = raw_data or {"name": name, "description": "uses tplink Kasa app"}
-        super().__init__(host, name, raw_data)
+        super().__init__(device_id, host, name, raw_data)
 
     @property
     def as_dict(self):
@@ -35,8 +36,9 @@ class KasaDevice(GenericDevice):
 
 class KasaBulb(KasaDevice, Bulb):
 
-    def __init__(self, host, name="light bulb", raw_data=None):
-        super().__init__(host, name, raw_data)
+    def __init__(self, device_id=None, host=None, name="light bulb", raw_data=None):
+        device_id = device_id or f"KasaBulb:{host}"
+        super().__init__(device_id, host, name, raw_data)
         self._timer = None
         self._bulb = SmartBulb(self.host)
 
@@ -141,8 +143,9 @@ class KasaBulb(KasaDevice, Bulb):
 
 class KasaRGBBulb(KasaBulb, RGBBulb):
 
-    def __init__(self, host, name="rgb light bulb", raw_data=None):
-        super().__init__(host, name, raw_data)
+    def __init__(self, device_id=None, host=None, name="rgb light bulb", raw_data=None):
+        device_id = device_id or f"KasaRGBBulb:{host}"
+        super().__init__(device_id, host, name, raw_data)
 
     @property
     def as_dict(self):
@@ -164,8 +167,9 @@ class KasaRGBBulb(KasaBulb, RGBBulb):
 
 class KasaRGBWBulb(KasaRGBBulb, RGBWBulb):
 
-    def __init__(self, host, name="rgbw light bulb", raw_data=None):
-        super().__init__(host, name, raw_data)
+    def __init__(self, device_id=None, host=None, name="rgbw light bulb", raw_data=None):
+        device_id = device_id or f"KasaRGBWBulb:{host}"
+        super().__init__(device_id, host, name, raw_data)
 
     @property
     def as_dict(self):

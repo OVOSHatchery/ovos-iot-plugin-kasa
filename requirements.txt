@@ -1,2 +1,3 @@
 pyHS100
 webcolors
+ovos-PHAL-plugin-commonIOT
