@@ -202,7 +202,7 @@ class KasaPlugin:
                 pass
 
     def get_device(self, ip):
-        for device in self.scan_kasa():
+        for device in self.scan():
             if device.host == ip:
                 return device
         return None
