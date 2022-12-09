@@ -1,9 +1,9 @@
 from ovos_utils.colors import Color
 from ovos_iot_plugin_kasa.kasa import discover_devices, SmartPlug, SmartBulb, tplink_hsv_to_hsv, hsv_to_tplink_hsv
-from ovos_plugin_manager.templates.iot import IOTPlugin, RGBWBulb, RGBBulb, Bulb
+from ovos_plugin_manager.templates.iot import RGBWBulb, RGBBulb, Bulb, IOTDevicePlugin, IOTScannerPlugin
 
 
-class KasaDevice(IOTPlugin):
+class KasaDevice(IOTDevicePlugin):
     def __init__(self, device_id, host, name="generic kasa device", raw_data=None):
         device_id = device_id or f"Kasa:{host}"
         raw_data = raw_data or {"name": name, "description": "uses tplink Kasa app"}
@@ -189,7 +189,7 @@ class KasaRGBWBulb(KasaRGBBulb, RGBWBulb):
         }
 
 
-class KasaPlugin:
+class KasaPlugin(IOTScannerPlugin):
     def scan(self):
         for d in discover_devices():
             if isinstance(d, SmartBulb):
