@@ -1,3 +1,4 @@
 pyHS100
 webcolors
-ovos-PHAL-plugin-commonIOT
+# TODO - min version
+ovos-plugin-manager
