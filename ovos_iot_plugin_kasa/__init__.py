@@ -12,14 +12,14 @@ class KasaDevice(Sensor):
     def __init__(self, device_id, host, name="generic kasa device", raw_data=None):
         device_id = device_id or f"Kasa:{host}"
         raw_data = raw_data or {"name": name, "description": "uses tplink Kasa app"}
-        super().__init__(device_id, host, name, raw_data)
+        super().__init__(device_id, host, name, raw_data=raw_data)
 
 
 class KasaPlug(KasaDevice, Plug):
 
     def __init__(self, device_id=None, host=None, name="smart plug", raw_data=None):
         device_id = device_id or f"KasaPlug:{host}"
-        super().__init__(device_id, host, name, raw_data)
+        super().__init__(device_id, host, name, raw_data=raw_data)
         self._plug = _SP(self.host)
 
 
@@ -27,7 +27,7 @@ class KasaBulb(KasaDevice, Bulb):
 
     def __init__(self, device_id=None, host=None, name="light bulb", raw_data=None):
         device_id = device_id or f"KasaBulb:{host}"
-        super().__init__(device_id, host, name, raw_data)
+        super().__init__(device_id, host, name, raw_data=raw_data)
         self._timer = None
         self._bulb = _SB(self.host)
 
@@ -129,24 +129,24 @@ class KasaRGBBulb(KasaBulb, RGBBulb):
 
     def __init__(self, device_id=None, host=None, name="rgb light bulb", raw_data=None):
         device_id = device_id or f"KasaRGBBulb:{host}"
-        super().__init__(device_id, host, name, raw_data)
+        super().__init__(device_id, host, name, raw_data=raw_data)
 
 
 class KasaRGBWBulb(KasaRGBBulb, RGBWBulb):
 
     def __init__(self, device_id=None, host=None, name="rgbw light bulb", raw_data=None):
         device_id = device_id or f"KasaRGBWBulb:{host}"
-        super().__init__(device_id, host, name, raw_data)
+        super().__init__(device_id, host, name, raw_data=raw_data)
 
 
 class KasaPlugin(IOTScannerPlugin):
     def scan(self):
         for d in discover_devices():
-            device_id = f"{d.alias}:{d.host}"
             try:
                 raw = dict(d.sys_info)
             except:  # sometimes times out, next scan will pick it up
                 continue
+            device_id = f"{raw.get('dev_name') or d.alias}:{d.host}"
             raw["last_seen"] = time.time()
             if isinstance(d, _SB):
                 if d.is_color:
