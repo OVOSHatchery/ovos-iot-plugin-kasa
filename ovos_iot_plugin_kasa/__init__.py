@@ -1,37 +1,26 @@
-from ovos_utils.colors import Color
-from ovos_iot_plugin_kasa.kasa import discover_devices, SmartPlug, SmartBulb, tplink_hsv_to_hsv, hsv_to_tplink_hsv
-from ovos_plugin_manager.templates.iot import RGBWBulb, RGBBulb, Bulb, IOTDevicePlugin, IOTScannerPlugin
+import time
+
+from lingua_franca.util.colors import Color
+from ovos_PHAL_plugin_commonIOT.opm.base import Sensor, IOTScannerPlugin, Plug
+from ovos_PHAL_plugin_commonIOT.opm.lights import Bulb, RGBBulb, RGBWBulb
+
+from ovos_iot_plugin_kasa.kasa import discover_devices, SmartPlug as _SP, SmartBulb as _SB, tplink_hsv_to_hsv, \
+    hsv_to_tplink_hsv
 
 
-class KasaDevice(IOTDevicePlugin):
+class KasaDevice(Sensor):
     def __init__(self, device_id, host, name="generic kasa device", raw_data=None):
         device_id = device_id or f"Kasa:{host}"
         raw_data = raw_data or {"name": name, "description": "uses tplink Kasa app"}
         super().__init__(device_id, host, name, raw_data)
 
-    @property
-    def as_dict(self):
-        return {
-            "host": self.host,
-            "name": self.name,
-            "model": self.product_model,
-            "device_type": "generic tplink kasa device",
-            "device_id": self.device_id,
-            "state": self.is_on,
-            "raw": self.raw_data
-        }
 
-    @property
-    def product_model(self):
-        return self.raw_data.get("model", "kasa")
+class KasaPlug(KasaDevice, Plug):
 
-    @property
-    def device_id(self):
-        return self.raw_data.get("deviceId")
-
-    @property
-    def name(self):
-        return self.raw_data["alias"]
+    def __init__(self, device_id=None, host=None, name="smart plug", raw_data=None):
+        device_id = device_id or f"KasaPlug:{host}"
+        super().__init__(device_id, host, name, raw_data)
+        self._plug = _SP(self.host)
 
 
 class KasaBulb(KasaDevice, Bulb):
@@ -40,33 +29,28 @@ class KasaBulb(KasaDevice, Bulb):
         device_id = device_id or f"KasaBulb:{host}"
         super().__init__(device_id, host, name, raw_data)
         self._timer = None
-        self._bulb = SmartBulb(self.host)
+        self._bulb = _SB(self.host)
 
     @property
     def as_dict(self):
-        return {
-            "host": self.host,
-            "name": self.name,
-            "model": self.product_model,
-            "device_type": "light bulb",
-            "device_id": self.device_id,
-            "color": self.color.as_dict,
+        data = super().as_dict
+        data.update({
+            "color": self.color.rgb255,
             "is_color": self.is_color,
             "is_dimmable": self.is_dimmable,
             "is_variable_color_temp": self.is_variable_color_temp,
-            "brightness": self.brightness_255,
-            "state": self.is_on,
-            "raw": self.raw_data
-        }
+            "brightness": self.brightness_255
+        })
+        return data
 
     @property
     def color(self):
         if self.is_off:
-            return Color.from_name("black")
+            return Color.from_rgb(0, 0, 0)
         if self._bulb.is_color:
             h, s, v = tplink_hsv_to_hsv(*self._bulb.hsv)
             return Color.from_hsv(h, s, v)
-        return Color.from_name("white")
+        return Color.from_rgb(255, 255, 255)
 
     @property
     def light_state(self):
@@ -147,23 +131,6 @@ class KasaRGBBulb(KasaBulb, RGBBulb):
         device_id = device_id or f"KasaRGBBulb:{host}"
         super().__init__(device_id, host, name, raw_data)
 
-    @property
-    def as_dict(self):
-        return {
-            "host": self.host,
-            "name": self.name,
-            "model": self.product_model,
-            "device_type": "rgb light bulb",
-            "device_id": self.device_id,
-            "color": self.color.as_dict,
-            "is_color": self.is_color,
-            "is_dimmable": self.is_dimmable,
-            "is_variable_color_temp": self.is_variable_color_temp,
-            "brightness": self.brightness_255,
-            "state": self.is_on,
-            "raw": self.raw_data
-        }
-
 
 class KasaRGBWBulb(KasaRGBBulb, RGBWBulb):
 
@@ -171,35 +138,20 @@ class KasaRGBWBulb(KasaRGBBulb, RGBWBulb):
         device_id = device_id or f"KasaRGBWBulb:{host}"
         super().__init__(device_id, host, name, raw_data)
 
-    @property
-    def as_dict(self):
-        return {
-            "host": self.host,
-            "name": self.name,
-            "model": self.product_model,
-            "device_type": "rgbw light bulb",
-            "device_id": self.device_id,
-            "color": self.color.as_dict,
-            "is_color": self.is_color,
-            "is_dimmable": self.is_dimmable,
-            "is_variable_color_temp": self.is_variable_color_temp,
-            "brightness": self.brightness_255,
-            "state": self.is_on,
-            "raw": self.raw_data
-        }
-
 
 class KasaPlugin(IOTScannerPlugin):
     def scan(self):
         for d in discover_devices():
-            if isinstance(d, SmartBulb):
+            raw = dict(d.sys_info)
+            raw["last_seen"] = time.time()
+            device_id = f"{d.alias}:{d.host}"
+            if isinstance(d, _SB):
                 if d.is_color:
-                    yield KasaRGBWBulb(d.host, d.alias, dict(d.sys_info))
+                    yield KasaRGBWBulb(device_id, d.host, d.alias, raw_data=raw)
                 else:
-                    yield KasaBulb(d.host, d.alias, dict(d.sys_info))
-            elif isinstance(d, SmartPlug):
-                # TODO
-                pass
+                    yield KasaBulb(device_id, d.host, d.alias, raw_data=raw)
+            elif isinstance(d, _SP):
+                yield KasaPlug(device_id, d.host, d.alias, raw_data=raw)
 
     def get_device(self, ip):
         for device in self.scan():
@@ -210,23 +162,18 @@ class KasaPlugin(IOTScannerPlugin):
 
 if __name__ == '__main__':
     from pprint import pprint
-    from time import sleep
+    from ovos_utils.messagebus import FakeBus
+    from ovos_utils import wait_for_exit_signal
 
-    plug = KasaPlugin()
 
-    for device in plug.scan():
+    def cb(device):
         pprint(device.as_dict)
-        device.toggle()
-        exit()
-        # print(device.is_off, device.is_on)
-        # device.turn_on()
-        # device.set_high_brightness()
-        device.change_color("cyan")
-        # device.blink()
-        # device.red_blue_cross_fade()
-        sleep(30)
-        device.reset()
 
+
+    plug = KasaPlugin(FakeBus(), new_device_callback=cb, lost_device_callback=cb)
+    plug.start()
+
+    wait_for_exit_signal()
     # bulb = get_device('192.168.1.64')
     # bulb.color_cycle()
     # sleep(60)

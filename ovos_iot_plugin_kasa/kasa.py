@@ -1,7 +1,7 @@
 from pyHS100 import Discover, SmartPlug, SmartBulb
 from time import sleep
 from ovos_utils.log import LOG
-from ovos_utils.colors import name_to_rgb, rgb_to_name, hex_to_rgb, rgb_to_hsv, hsv_to_rgb, hex_to_hsv, name_to_hsv, hsv_to_name
+from lingua_franca.util.colors import name_to_rgb, rgb_to_name, hex_to_rgb, rgb_to_hsv, hsv_to_rgb, hex_to_hsv, name_to_hsv, hsv_to_name
 
 
 def discover_devices():
