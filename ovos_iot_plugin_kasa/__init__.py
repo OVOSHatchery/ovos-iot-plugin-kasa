@@ -142,9 +142,12 @@ class KasaRGBWBulb(KasaRGBBulb, RGBWBulb):
 class KasaPlugin(IOTScannerPlugin):
     def scan(self):
         for d in discover_devices():
-            raw = dict(d.sys_info)
-            raw["last_seen"] = time.time()
             device_id = f"{d.alias}:{d.host}"
+            try:
+                raw = dict(d.sys_info)
+            except:  # sometimes times out, next scan will pick it up
+                continue
+            raw["last_seen"] = time.time()
             if isinstance(d, _SB):
                 if d.is_color:
                     yield KasaRGBWBulb(device_id, d.host, d.alias, raw_data=raw)
